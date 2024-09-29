@@ -12,6 +12,19 @@ class MyApp extends StatelessWidget {
       title: 'ESP32 Relay Control',
       debugShowCheckedModeBanner: false,
       home: RelayControl(),
+      theme: ThemeData(
+  brightness: Brightness.light,
+  primarySwatch: Colors.blue,
+  textTheme: TextTheme(
+    bodyLarge: TextStyle(color: Colors.grey[700], fontSize: 16),
+    bodyMedium: TextStyle(color: Colors.grey[600]),
+    titleLarge: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+      color: Colors.grey[800],
+    ),
+  ),
+),
     );
   }
 }
@@ -22,91 +35,129 @@ class RelayControl extends StatefulWidget {
 }
 
 class _RelayControlState extends State<RelayControl> {
-  final String baseUrl = 'http://192.168.4.1/relay'; // ESP32 IP Address
-  List<bool> relayStates = [false, false, false, false]; // Track relay states
+  final String baseUrl = 'http://192.168.4.1/relay';
+  List<bool> relayStates = [false, false, false, false];
 
   Future<void> controlRelay(int id, bool state) async {
-    final url = '$baseUrl?id=${id - 1}&state=${state ? 1 : 0}'; // Adjusting ID for request
-    print('Requesting URL: $url'); // Debugging line
+    final url = Uri.parse('$baseUrl?id=$id&state=${state ? 1 : 0}');
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(url);
       if (response.statusCode == 200) {
         setState(() {
-          relayStates[id - 1] = state; // Update the state
+          relayStates[id] = state;
         });
-        print('Relay $id turned ${state ? 'ON' : 'OFF'}');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  content: Text('Relay ${id + 1} turned ${state ? 'ON' : 'OFF'}'),
+  backgroundColor: state ? Colors.green : Colors.red,
+  duration: Duration(seconds: 2), // Delay set to 2 seconds
+));
       } else {
-        print('Error: ${response.statusCode} - ${response.body}');
+        showError('Error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Failed to control relay: $e');
+      showError('Failed to connect to ESP32: $e');
     }
   }
+
+void showError(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(message),
+    backgroundColor: Colors.red,
+    duration: Duration(seconds: 2), // Delay set to 2 seconds
+  ));
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('House Automation'),
-        backgroundColor: Colors.blueAccent, // Header color
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text('House Automation', style: TextStyle(fontSize: 24)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: buildRelayContainer('Bedroom', 1)),
-                SizedBox(width: 20),
-                Expanded(child: buildRelayContainer('Living Room', 2)),
-              ],
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: buildRelayContainer('Comfort Room', 3)),
-                SizedBox(width: 20),
-                Expanded(child: buildRelayContainer('Garage', 4)),
-              ],
-            ),
-          ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.blue.shade300,
+              Colors.blue.shade700,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              buildRelayRow('Bedroom', 0, 'Living Room', 1),
+              SizedBox(height: 20),
+              buildRelayRow('Comfort Room', 2, 'Garage', 3),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget buildRelayContainer(String name, int id) {
+  Widget buildRelayRow(String name1, int id1, String name2, int id2) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(child: buildRelayCard(name1, id1)),
+        SizedBox(width: 20),
+        Expanded(child: buildRelayCard(name2, id2)),
+      ],
+    );
+  }
+
+  Widget buildRelayCard(String name, int id) {
     return Container(
       padding: EdgeInsets.all(16.0),
-      height: 120, // Increased height
       decoration: BoxDecoration(
-        color: Colors.lightBlue[50],
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
+            color: Colors.black.withOpacity(0.1),
             spreadRadius: 2,
-            blurRadius: 5,
-            offset: Offset(0, 3), // Changes position of shadow
+            blurRadius: 10,
+            offset: Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: TextStyle(fontSize: 16)), // Smaller font size
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(relayStates[id - 1] ? 'ON' : 'OFF', style: TextStyle(fontSize: 14)), // Smaller font size
-              SizedBox(width: 10),
-              Switch(
-                value: relayStates[id - 1],
-                activeColor: Colors.green, // Set the active color to green
-                onChanged: (value) => controlRelay(id, value),
+              Text(
+                relayStates[id] ? 'ON' : 'OFF',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: relayStates[id] ? Colors.green : Colors.red,
+                ),
+              ),
+              Transform.scale(
+                scale: 1.5,
+                child: Switch(
+                  value: relayStates[id],
+                  activeColor: Colors.green,
+                  inactiveTrackColor: Colors.grey.shade300,
+                  onChanged: (value) => controlRelay(id, value),
+                ),
               ),
             ],
           ),
