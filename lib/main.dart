@@ -9,48 +9,50 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ESP32 Relay Control',
+      title: 'ESP32 LED Control',
       debugShowCheckedModeBanner: false,
-      home: RelayControl(),
+      home: LEDControl(),
       theme: ThemeData(
-  brightness: Brightness.light,
-  primarySwatch: Colors.blue,
-  textTheme: TextTheme(
-    bodyLarge: TextStyle(color: Colors.grey[700], fontSize: 16),
-    bodyMedium: TextStyle(color: Colors.grey[600]),
-    titleLarge: TextStyle(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      color: Colors.grey[800],
-    ),
-  ),
-),
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.grey[700], fontSize: 16),
+          bodyMedium: TextStyle(color: Colors.grey[600]),
+          titleLarge: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class RelayControl extends StatefulWidget {
+class LEDControl extends StatefulWidget {
   @override
-  _RelayControlState createState() => _RelayControlState();
+  _LEDControlState createState() => _LEDControlState();
 }
 
-class _RelayControlState extends State<RelayControl> {
-  final String baseUrl = 'http://192.168.4.1/relay';
-  List<bool> relayStates = [false, false, false, false];
+class _LEDControlState extends State<LEDControl> {
+  final String baseUrl = 'http://192.168.4.1'; // Adjust with your ESP32's IP
+  List<bool> ledStates = [false, false, false, false];
 
-  Future<void> controlRelay(int id, bool state) async {
-    final url = Uri.parse('$baseUrl?id=$id&state=${state ? 1 : 0}');
+  Future<void> controlLED(int id, bool state) async {
+    final url = Uri.parse('$baseUrl/?id=$id&state=${state ? 1 : 0}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         setState(() {
-          relayStates[id] = state;
+          ledStates[id] = state;
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-  content: Text('Relay ${id + 1} turned ${state ? 'ON' : 'OFF'}'),
-  backgroundColor: state ? Colors.green : Colors.red,
-  duration: Duration(seconds: 2), // Delay set to 2 seconds
-));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('LED ${id + 1} turned ${state ? 'ON' : 'OFF'}'),
+            backgroundColor: state ? Colors.green : Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
       } else {
         showError('Error: ${response.statusCode}');
       }
@@ -59,13 +61,15 @@ class _RelayControlState extends State<RelayControl> {
     }
   }
 
-void showError(String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text(message),
-    backgroundColor: Colors.red,
-    duration: Duration(seconds: 2), // Delay set to 2 seconds
-  ));
-}
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,9 +97,9 @@ void showError(String message) {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              buildRelayRow('Bedroom', 0, 'Living Room', 1),
+              buildLEDRow('Bedroom', 0, 'Living Room', 1),
               SizedBox(height: 20),
-              buildRelayRow('Comfort Room', 2, 'Garage', 3),
+              buildLEDRow('Comfort Room', 2, 'Garage', 3),
             ],
           ),
         ),
@@ -103,18 +107,18 @@ void showError(String message) {
     );
   }
 
-  Widget buildRelayRow(String name1, int id1, String name2, int id2) {
+  Widget buildLEDRow(String name1, int id1, String name2, int id2) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: buildRelayCard(name1, id1)),
+        Expanded(child: buildLEDCard(name1, id1)),
         SizedBox(width: 20),
-        Expanded(child: buildRelayCard(name2, id2)),
+        Expanded(child: buildLEDCard(name2, id2)),
       ],
     );
   }
 
-  Widget buildRelayCard(String name, int id) {
+  Widget buildLEDCard(String name, int id) {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -144,19 +148,19 @@ void showError(String message) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                relayStates[id] ? 'ON' : 'OFF',
+                ledStates[id] ? 'ON' : 'OFF',
                 style: TextStyle(
                   fontSize: 14,
-                  color: relayStates[id] ? Colors.green : Colors.red,
+                  color: ledStates[id] ? Colors.green : Colors.red,
                 ),
               ),
               Transform.scale(
                 scale: 1.5,
                 child: Switch(
-                  value: relayStates[id],
+                  value: ledStates[id],
                   activeColor: Colors.green,
                   inactiveTrackColor: Colors.grey.shade300,
-                  onChanged: (value) => controlRelay(id, value),
+                  onChanged: (value) => controlLED(id, value),
                 ),
               ),
             ],
