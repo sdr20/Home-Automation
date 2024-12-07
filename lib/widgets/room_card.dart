@@ -26,17 +26,17 @@ class _RoomCardState extends State<RoomCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(8),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Icon(
                   widget.iconData,
-                  size: 28,
+                  size: 22,
                   color: isOn ? Colors.blue : Colors.grey,
                 ),
                 Switch(
@@ -56,38 +56,45 @@ class _RoomCardState extends State<RoomCard> {
                 ),
               ],
             ),
-            Column(
-              children: [
-                Text(
-                  widget.roomName,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Active: ${widget.ledService.getActiveDuration(widget.ledId)}s',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+            const SizedBox(height: 4),
+            Text(
+              widget.roomName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            ElevatedButton.icon(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => TimerDialog(
-                    roomName: widget.roomName,
-                    ledId: widget.ledId,
-                    ledService: widget.ledService,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.timer, size: 18),
-              label: const Text('Timer'),
+            Text(
+              'Active: ${widget.ledService.getActiveDuration(widget.ledId)}s',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => TimerDialog(
+                      roomName: widget.roomName,
+                      ledId: widget.ledId,
+                      ledService: widget.ledService,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.timer, size: 14),
+                label: const Text(
+                  'Timer',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
             ),
           ],
         ),
